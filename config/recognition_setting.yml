@@ -1,0 +1,64 @@
+# 경로 설정
+output_dir: "/content/drive/MyDrive/audio/models/output_2"  # model 어따가 save 할지
+model_name_or_path: "sawradip/bengali-whisper-medium-tugstugi"  # 사용할 모델 경로 or hugging face 이름
+audio_absolute_path: "/content/drive/MyDrive/audio/dataset/train_mp3s/{}.mp3"  # audio 절대경로 format
+
+
+# load dataset settings
+audio_id_col: "id"  # audio의 id(구별자)가 들어있는 column
+target_col: "normalized"  # target label이 들어있는 column
+original_sampling_rate: 32000  # 원본 오디오 sr
+sampling_rate: 16000  # target sr
+
+## word 관련 세팅
+max_word: 100  # label 최대 단어 갯수 제한
+max_frame: 3000  # mel_spectogram의 frame 길이 제한
+use_multiple_padding: null  # 양옆으로 패딩할지 안할지
+pad_token: -100  # 패드의 토큰 id
+
+
+# training setting
+use_early_stopping_callback: true  # 얼리 스토핑 사용 여부
+early_stopping_patience: 4  # 몇번 참을지
+save_base_model: false  # 처음 로드한 모델 base 폴더에 저장할지 여부
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 4
+num_train_epochs: 10
+auto_find_batch_size: false
+
+# save settings
+save_strategy: "steps"
+save_steps: 100
+save_total_limit: 2
+
+
+# validation setting
+metrics:
+  - wer  # metrics, 넣으면 추가됨
+per_device_train_batch_size: 2
+evaluation_strategy: 'steps'
+eval_steps: 100
+prediction_loss_only: false
+
+
+# optimizer setting
+optim: "adamw_torch"
+weight_decay: 0.01
+adam_beta1: 0.9
+adam_beta2: 0.999
+learning_rate: 1e-4
+
+## scheduler
+lr_scheduler_type: 'cosine'
+warmup_steps: 350
+
+# best models
+load_best_model_at_end: true
+metric_for_best_model: "wer"
+greater_is_better: false
+
+# another args setting
+overwrite_output_dir: true
+group_by_length: false
+fp16: true
+logging_steps: 100
