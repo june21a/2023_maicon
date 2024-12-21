@@ -142,40 +142,38 @@ class whisper_cl:
 
 
 # load pretrained_model and processor from huggingface
-# print("loading dataset...")
-# train_ds = whisper_cl_dataset.load_dataset_from_directory(data_dir = CFG.data_dir, train_split_rate = CFG.train_split_rate, test_size = CFG.test_size)
-# encoded_ds = train_ds.map(whisper_cl_dataset.prepare_dataset)
-# labels = whisper_cl_model.get_label_from_ds(train_ds)
-# model, feature_extractor = whisper_cl_model.load_model(labels, CFG.model_name_or_path, True)
-# if CFG.save_base_model:
-#     save_model(CFG.output_dir + "/base", model, feature_extractor)
+print("loading dataset...")
+train_ds = whisper_cl_dataset.load_dataset_from_directory(data_dir = CFG.data_dir, train_split_rate = CFG.train_split_rate, test_size = CFG.test_size)
+encoded_ds = train_ds.map(whisper_cl_dataset.prepare_dataset)
+labels = whisper_cl_model.get_label_from_ds(train_ds)
+model, feature_extractor = whisper_cl_model.load_model(labels, CFG.model_name_or_path, True)
+if CFG.save_base_model:
+    save_model(CFG.output_dir + "/base", model, feature_extractor)
 
 
 
 
-# def train():
-    # callbacks = []
-    # if CFG.use_early_stopping_callback:
-    #     callbacks.append(EarlyStoppingCallback(early_stopping_patience=CFG.early_stopping_patience))
+def train():
+    callbacks = []
+    if CFG.use_early_stopping_callback:
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=CFG.early_stopping_patience))
 
     
-    # print("training... !!!!!!")
-    # trainer = Trainer(
-    #     model=model,
-    #     args=training_args,
-    #     compute_metrics=compute_metrics,
-    #     train_dataset=encoded_ds["train"],
-    #     eval_dataset=encoded_ds["test"],
-    #     tokenizer=feature_extractor,
-    #     preprocess_logits_for_metrics = preprocess_logits_for_metrics,
-    #     callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
-    # )
+    print("training... !!!!!!")
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        compute_metrics=compute_metrics,
+        train_dataset=encoded_ds["train"],
+        eval_dataset=encoded_ds["test"],
+        tokenizer=feature_extractor,
+        preprocess_logits_for_metrics = preprocess_logits_for_metrics,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+    )
 
-    # trainer.train()
+    trainer.train()
 
-    # # 마지막 결과 자동 저장
-    # trainer.save_model(CFG.output_dir)
-    # feature_extractor.save_pretrained(CFG.output_dir)
-    # return trainer
-
-
+    # 마지막 결과 자동 저장
+    trainer.save_model(CFG.output_dir)
+    feature_extractor.save_pretrained(CFG.output_dir)
+    return trainer

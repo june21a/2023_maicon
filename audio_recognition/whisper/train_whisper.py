@@ -157,44 +157,44 @@ class whisper_asr:
 
 
 # load pretrained_model and processor from huggingface
-# model, processor = whisper_model.load_model(CFG.model_name_or_path)
-# if CFG.save_base_model:
-#     save_model(CFG.output_dir + "/base", model, processor)
+model, processor = whisper_model.load_model(CFG.model_name_or_path)
+if CFG.save_base_model:
+    save_model(CFG.output_dir + "/base", model, processor)
 
 
-# def train(train_df = None, valid_df = None):
-    # callbacks = []
-    # train_dataset = None
-    # valid_dataset = None
+def train(train_df = None, valid_df = None):
+    callbacks = []
+    train_dataset = None
+    valid_dataset = None
 
-    # print("loading dataset...")
-    # if train_df is not None:
-    #     train_dataset = whisper_dataset.WhisperDataset(train_df, processor, CFG.audio_id_col, CFG.target_col, CFG.original_sampling_rate, CFG.sampling_rate, CFG.audio_absolute_path)
-    # if valid_df is not None:
-    #     valid_dataset = whisper_dataset.WhisperDataset(valid_df, processor, CFG.audio_id_col, CFG.target_col, CFG.original_sampling_rate, CFG.sampling_rate, CFG.audio_absolute_path)
-    # data_collator = whisper_dataset.DataCollatorCTCWithPadding(processor, CFG.pad_token, True, CFG.max_frame, CFG.max_word, CFG.use_multiple_padding, CFG.use_multiple_padding)
-    # print("Done!")
+    print("loading dataset...")
+    if train_df is not None:
+        train_dataset = whisper_dataset.WhisperDataset(train_df, processor, CFG.audio_id_col, CFG.target_col, CFG.original_sampling_rate, CFG.sampling_rate, CFG.audio_absolute_path)
+    if valid_df is not None:
+        valid_dataset = whisper_dataset.WhisperDataset(valid_df, processor, CFG.audio_id_col, CFG.target_col, CFG.original_sampling_rate, CFG.sampling_rate, CFG.audio_absolute_path)
+    data_collator = whisper_dataset.DataCollatorCTCWithPadding(processor, CFG.pad_token, True, CFG.max_frame, CFG.max_word, CFG.use_multiple_padding, CFG.use_multiple_padding)
+    print("Done!")
     
-    # if CFG.use_early_stopping_callback:
-    #     callbacks.append(EarlyStoppingCallback(early_stopping_patience=CFG.early_stopping_patience))
+    if CFG.use_early_stopping_callback:
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=CFG.early_stopping_patience))
 
 
-    # print("training... !!!!!!")
-    # trainer = Trainer(
-    #     model=model,
-    #     data_collator=data_collator,
-    #     args=training_args,
-    #     compute_metrics=compute_metrics,
-    #     train_dataset=train_dataset,
-    #     eval_dataset=valid_dataset,
-    #     tokenizer=processor.feature_extractor,
-    #     preprocess_logits_for_metrics = preprocess_logits_for_metrics,
-    #     callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
-    # )
+    print("training... !!!!!!")
+    trainer = Trainer(
+        model=model,
+        data_collator=data_collator,
+        args=training_args,
+        compute_metrics=compute_metrics,
+        train_dataset=train_dataset,
+        eval_dataset=valid_dataset,
+        tokenizer=processor.feature_extractor,
+        preprocess_logits_for_metrics = preprocess_logits_for_metrics,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+    )
 
-    # trainer.train()
+    trainer.train()
 
-    # # 마지막 결과 자동 저장
-    # trainer.save_model(CFG.output_dir)
-    # processor.save_pretrained(CFG.output_dir)
-    # return trainer
+    # 마지막 결과 자동 저장
+    trainer.save_model(CFG.output_dir)
+    processor.save_pretrained(CFG.output_dir)
+    return trainer

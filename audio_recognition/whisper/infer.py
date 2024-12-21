@@ -47,6 +47,3 @@ def inference(target_language, max_length, enable_beams, num_beams):
     # 너무 많이 반복되는 단어 제거 후 output return
     texts = [{'text':fix_repetition(d['text'], CFG.max_count)} for d in texts]
     return texts
-
-def inference_with_dataloader(target_language, max_length, enable_beams, num_beams):
-    pass
