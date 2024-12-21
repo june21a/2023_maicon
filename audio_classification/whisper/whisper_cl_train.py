@@ -1,12 +1,7 @@
 import os
-import numpy as np
 import torch
 from transformers import  AutoFeatureExtractor, AutoModelForAudioClassification
 from transformers import TrainingArguments, Trainer, EarlyStoppingCallback, pipeline
-import gc
-import jiwer
-import pyctcdecode
-import kenlm
 import evaluate
 import whisper_cl_model
 import whisper_cl_dataset
