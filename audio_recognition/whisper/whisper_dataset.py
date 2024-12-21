@@ -8,18 +8,6 @@ from transformers import AutoProcessor
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
-class config:
-    audio_id_col = "id" # audio의 id(구별자)가 들어있는 column
-    target_col = "normalized" # target label이 들어있는 column
-    original_sampling_rate = 32000 # 원본 오디오 sr
-    sampling_rate = 16000 # target sr
-    audio_absolute_path = '/content/drive/MyDrive/audio/dataset/train_mp3s/{}.mp3' # audio 절대경로 format
-    max_word = 100 # label 최대 단어 갯수 제한
-    max_frame = 4000 # mel_spectogram의 frame 길이 제한
-    use_multiple_padding = None # 양옆으로 패딩할지 안할지
-    pad_token = -100 # 패드의 토큰 id 
-CFG = config()
-
 
 def get_vocab_dict(processor):
     vocab_dict = processor.tokenizer.get_vocab()
@@ -64,12 +52,12 @@ class WhisperDataset(torch.utils.data.Dataset):
 @dataclass
 class DataCollatorCTCWithPadding:
     processor: Optional[transformers.AutoProcessor]
-    pad_token: Optional[int] = CFG.pad_token
+    pad_token: Optional[int] = -100
     padding: Union[bool, str] = True
-    max_length: Optional[int] = CFG.max_frame # max_frame, sample_rate * 시간(second) = num_frame
-    max_length_labels: Optional[int] = CFG.max_word # 100단어로 짜르기 # label 최대 단어 갯수
-    pad_to_multiple_of: Optional[int] = CFG.use_multiple_padding # 패딩이 양옆으로 됨 -> 패딩 2배
-    pad_to_multiple_of_labels: Optional[int] = CFG.use_multiple_padding
+    max_length: Optional[int] = 4000 # max_frame, sample_rate * 시간(second) = num_frame
+    max_length_labels: Optional[int] = 100 # 100단어로 짜르기 # label 최대 단어 갯수
+    pad_to_multiple_of: Optional[int] = None # 패딩이 양옆으로 됨 -> 패딩 2배
+    pad_to_multiple_of_labels: Optional[int] = None
 
     def __call__(self, features: List[Dict[str, Union[List[int], torch.Tensor]]]) -> Dict[str, torch.Tensor]:
         # split inputs and labels since they have to be of different lenghts and need

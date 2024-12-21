@@ -9,33 +9,19 @@ from transformers import TrainingArguments, Trainer, EarlyStoppingCallback, pipe
 import gc
 import jiwer
 import evaluate
-import whisper_model
-import whisper_dataset
+from whisper import whisper_model
+from whisper import whisper_dataset
+from whisper.utils import load_yaml, create_directory
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg_path', type=str, default='../../config/recognition_setting.yml', help='사용할 config 경로')
+    parser.add_argument('--cfg_path', type=str, default='../config/recognition_setting.yml', help='사용할 config 경로')
     parser.add_argument('train_csv_path', type=str, required=True, help="train.csv의 경로")
     parser.add_argument('val_csv_path', type=str, required=True, help="val.csv의 경로")
     
     args = parser.parse_args()
     return args
-    
-
-def load_yaml(yml_path):
-    # YAML 파일을 읽어서 Python 딕셔너리로 변환
-    with open(yml_path, 'r') as yml_file:
-        yml_data = yaml.safe_load(yml_file)
-    return yml_data
-
-
-def createDirectory(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except OSError:
-        print(f"Alert: Directory {directory} already exists -> pretrained model could be overwritten")
 
 
 def get_compute_metrics_func(processor, metric_names):
@@ -111,8 +97,8 @@ class WhisperAsr:
         )
         print("Done!")
 
-        createDirectory(self.CFG["output_dir"])
-        createDirectory(self.CFG["output_dir"] + "/base")
+        create_directory(self.CFG["output_dir"])
+        create_directory(self.CFG["output_dir"] + "/base")
 
         if self.CFG["save_base_model"]:
             self.save_model(self.CFG["output_dir"] + "/base")
