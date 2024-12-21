@@ -1,15 +1,21 @@
 import glob
+import argparse
 import transformers
 from transformers import pipeline
 
-class config:
-    MODEL = "/content/drive/MyDrive/audio/models/output_2/" # 모델 경로(processor, model 둘 다 저장되어 있어야 함)
-    CHUNK_LENGTH_S = 20.1 # 오디오 파일 너무 길면 20.1초로 끊어서 처리함
-    BATCH_SIZE = 4 # test batch size
-    DATASET_PATH = '/content/drive/MyDrive/audio/dataset/test_mp3s/' # test할 audio파일 들어있는 경로
-    max_count = 20 # N회 이상 반복되는 단어 모두 제거
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Configuration for model testing")
+    # Define arguments corresponding to the config values
+    parser.add_argument('model', type=str, required=True, help="Path to the model directory")
+    parser.add_argument('dataset_path', type=str, required=True, help="Path to the test audio files directory")
+    parser.add_argument('--chunk_length_s', type=float, default=20.1, help="Chunk length in seconds for audio splitting")
+    parser.add_argument('--batch_size', type=int, default=4, help="Batch size for testing")
+    parser.add_argument('--max_count', type=int, default=20, help="Maximum count for repeating words to remove")
 
-CFG = config()
+    # Parse the arguments
+    args = parser.parse_args()
+    return args
+
 
 # 너무 많이 반복되는 단어 제거
 def fix_repetition(text, max_count):
@@ -27,17 +33,18 @@ def fix_repetition(text, max_count):
     text = " ".join(words)
     return text
 
-def inference(target_language, max_length, enable_beams, num_beams):
+
+def inference(target_language, max_length, enable_beams, num_beams, model, dataset_path, chunk_length_s, batch_size, max_count):
     # load file path
-    files = list(glob.glob(CFG.DATASET_PATH + '/' + '*.wav'))
-    files += list(glob.glob(CFG.DATASET_PATH + '/' + '*.mp3'))
+    files = list(glob.glob(dataset_path + '/' + '*.wav'))
+    files += list(glob.glob(dataset_path + '/' + '*.mp3'))
     files.sort()
     
     # load model
     pipe = pipeline(task="automatic-speech-recognition",
-                    model=CFG.MODEL,
-                    tokenizer=CFG.MODEL,
-                    chunk_length_s=CFG.CHUNK_LENGTH_S, device=0, batch_size=CFG.BATCH_SIZE)
+                    model=model,
+                    tokenizer=model,
+                    chunk_length_s=chunk_length_s, device=0, batch_size=batch_size)
     pipe.model.config.forced_decoder_ids = pipe.tokenizer.get_decoder_prompt_ids(language=target_language, task="transcribe")
     if enable_beams:
         texts = pipe(files, generate_kwargs={"max_length": max_length, "num_beams": num_beams})
@@ -45,5 +52,14 @@ def inference(target_language, max_length, enable_beams, num_beams):
         texts = pipe(files)
     
     # 너무 많이 반복되는 단어 제거 후 output return
-    texts = [{'text':fix_repetition(d['text'], CFG.max_count)} for d in texts]
+    texts = [{'text':fix_repetition(d['text'], max_count)} for d in texts]
     return texts
+
+
+def main():
+    args = parse_arguments()
+    inference('en', 128, True, 4, args.model, args.dataset_path, args.chunk_length_s, args.batch_size, args.max_count)
+    
+
+if __name__=="__main__":
+    main()

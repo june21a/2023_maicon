@@ -62,6 +62,35 @@ class WhisperAsr:
         self.train_dataset = None
         self.valid_dataset = None
         self.CFG = CFG
+        self.training_args = TrainingArguments(
+            output_dir=CFG['output_dir'],  # 모델 저장 디렉토리
+            overwrite_output_dir=CFG['overwrite_output_dir'],  # 기존 output_dir 덮어쓸지 여부
+            group_by_length=CFG['group_by_length'],  # 데이터 샘플들을 길이에 따라 그룹화할지 여부
+            optim=CFG['optim'],  # 옵티마이저 (AdamW 사용)
+            lr_scheduler_type=CFG['lr_scheduler_type'],  # 학습률 스케줄러 종류 (cosine)
+            weight_decay=CFG['weight_decay'],  # 가중치 감소
+            adam_beta1=CFG['adam_beta1'],  # Adam 옵티마이저의 beta1 파라미터
+            adam_beta2=CFG['adam_beta2'],  # Adam 옵티마이저의 beta2 파라미터
+            per_device_train_batch_size=CFG['per_device_train_batch_size'],  # 훈련 배치 크기
+            per_device_eval_batch_size=CFG['per_device_eval_batch_size'],  # 평가 배치 크기
+            gradient_accumulation_steps=CFG['gradient_accumulation_steps'],  # 그래디언트 누적 스텝
+            evaluation_strategy=CFG['evaluation_strategy'],  # 평가 전략 (steps 기준)
+            save_strategy=CFG['save_strategy'],  # 저장 전략 (steps 기준)
+            num_train_epochs=CFG['num_train_epochs'],  # 훈련 에폭 수
+            fp16=CFG['fp16'],  # 16-bit 부동소수점 사용 여부
+            save_steps=CFG['save_steps'],  # 저장 주기 (steps 기준)
+            eval_steps=CFG['eval_steps'],  # 평가 주기 (steps 기준)
+            logging_steps=CFG['logging_steps'],  # 로그 기록 주기
+            learning_rate=CFG['learning_rate'],  # 초기 학습률
+            warmup_steps=CFG['warmup_steps'],  # 학습률 워밍업 단계
+            save_total_limit=CFG['save_total_limit'],  # 저장할 모델 수 제한
+            load_best_model_at_end=CFG['load_best_model_at_end'],  # 훈련 종료 후 가장 좋은 모델 로드 여부
+            metric_for_best_model=CFG['metric_for_best_model'],  # 성능 평가 지표 (이 경우 'wer')
+            greater_is_better=CFG['greater_is_better'],  # 지표에서 "클수록 좋은지"
+            prediction_loss_only=CFG['prediction_loss_only'],  # 예측 손실만 계산할지 여부
+            auto_find_batch_size=CFG['auto_find_batch_size'],  # 자동 배치 크기 탐색 여부
+        )
+        
 
         print("loading dataset...")
         if train_df is not None:
@@ -110,12 +139,12 @@ class WhisperAsr:
         self.model.save_pretrained(directory)
         self.processor.save_pretrained(directory)
     
-    def train(self, training_args):
+    def train(self):
         print("training... !!!!!!")
         trainer = Trainer(
             model=self.model,
             data_collator=self.data_collator,
-            args=training_args,
+            args=self.training_args,
             compute_metrics=get_compute_metrics_func(self.processor),
             train_dataset=self.train_dataset,
             eval_dataset=self.valid_dataset,
@@ -138,39 +167,8 @@ def main():
     val_df = pd.read_csv(args.val_csv_path)
     CFG = load_yaml(args.cfg_path)
     
-    
-    training_args = TrainingArguments(
-        output_dir=CFG['output_dir'],  # 모델 저장 디렉토리
-        overwrite_output_dir=CFG['overwrite_output_dir'],  # 기존 output_dir 덮어쓸지 여부
-        group_by_length=CFG['group_by_length'],  # 데이터 샘플들을 길이에 따라 그룹화할지 여부
-        optim=CFG['optim'],  # 옵티마이저 (AdamW 사용)
-        lr_scheduler_type=CFG['lr_scheduler_type'],  # 학습률 스케줄러 종류 (cosine)
-        weight_decay=CFG['weight_decay'],  # 가중치 감소
-        adam_beta1=CFG['adam_beta1'],  # Adam 옵티마이저의 beta1 파라미터
-        adam_beta2=CFG['adam_beta2'],  # Adam 옵티마이저의 beta2 파라미터
-        per_device_train_batch_size=CFG['per_device_train_batch_size'],  # 훈련 배치 크기
-        per_device_eval_batch_size=CFG['per_device_eval_batch_size'],  # 평가 배치 크기
-        gradient_accumulation_steps=CFG['gradient_accumulation_steps'],  # 그래디언트 누적 스텝
-        evaluation_strategy=CFG['evaluation_strategy'],  # 평가 전략 (steps 기준)
-        save_strategy=CFG['save_strategy'],  # 저장 전략 (steps 기준)
-        num_train_epochs=CFG['num_train_epochs'],  # 훈련 에폭 수
-        fp16=CFG['fp16'],  # 16-bit 부동소수점 사용 여부
-        save_steps=CFG['save_steps'],  # 저장 주기 (steps 기준)
-        eval_steps=CFG['eval_steps'],  # 평가 주기 (steps 기준)
-        logging_steps=CFG['logging_steps'],  # 로그 기록 주기
-        learning_rate=CFG['learning_rate'],  # 초기 학습률
-        warmup_steps=CFG['warmup_steps'],  # 학습률 워밍업 단계
-        save_total_limit=CFG['save_total_limit'],  # 저장할 모델 수 제한
-        load_best_model_at_end=CFG['load_best_model_at_end'],  # 훈련 종료 후 가장 좋은 모델 로드 여부
-        metric_for_best_model=CFG['metric_for_best_model'],  # 성능 평가 지표 (이 경우 'wer')
-        greater_is_better=CFG['greater_is_better'],  # 지표에서 "클수록 좋은지"
-        prediction_loss_only=CFG['prediction_loss_only'],  # 예측 손실만 계산할지 여부
-        auto_find_batch_size=CFG['auto_find_batch_size'],  # 자동 배치 크기 탐색 여부
-    )
-    
     whisper = WhisperAsr(train_df, val_df, CFG)
-    whisper.train(training_args=training_args)
-
+    whisper.train()
 
 if __name__=="__main__":
     main()
